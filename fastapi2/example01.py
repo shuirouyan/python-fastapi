@@ -1,10 +1,12 @@
 #!~/myenv/bin/python3
 
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile 
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn, logging
 import json
 from datetime import datetime
+from pydantic import BaseModel
+
 
 # 配置日志
 logging.basicConfig(
@@ -20,6 +22,13 @@ logger = logging.getLogger("fastapi_app")
 # 获取日志对象
 logger = logging.getLogger("fastapi_app")
 
+
+
+
+class ItemBasic(BaseModel):
+    name: str | None='默认'
+    age: int | None=0
+    price: float | None=0.0
 
 @app.on_event("startup")
 async def startup_event():
@@ -46,6 +55,33 @@ async def get_query_info(item_id: int | None=12, q: str | None=None):
     if q:
         return {"datetime": str(datetime.now()), "q": q, "item_id": item_id}
     return {"datetime": datetime.now(), "item_id": item_id}
+
+@app.post('/post/item')
+async def get_item(item: ItemBasic):
+    logger.info(item)
+    return item
+
+
+@app.post("/files/")
+async def create_file(file: bytes = File()):
+    return {"file_size": len(file)}
+    
+@app.post("/uploadfile/")
+async def create_upload_file(file: UploadFile):
+    logger.info("file name:{}".format(file.filename))
+    return {"filename": file.filename}
+
+@app.post("/uploadfiles/")
+async def create_upload_file(files: list[UploadFile]):
+    logger.info("file name:{}".format(files[0].filename))
+    return {"filename": [file.filename for file in files]}
+
+
+
+
+
+
+
 
 # cros
 app.add_middleware(
